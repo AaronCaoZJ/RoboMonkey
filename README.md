@@ -59,7 +59,7 @@ Launch OpenVLA using our optimized SGLang-based engine:
 ```bash
 conda activate sglang-vla
 cd sglang-vla
-CUDA_VISIBLE_DEVICES=1 python vla/openvla_server.py --seed 1
+CUDA_VISIBLE_DEVICES=1 python openvla_server.py --seed 1
 ```
 
 
