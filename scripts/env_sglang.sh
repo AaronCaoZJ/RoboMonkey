@@ -15,9 +15,29 @@ check_status() {
     fi
 }
 
+# Detect conda installation
+detect_conda_path() {
+    if command -v conda &> /dev/null; then
+        CONDA_PREFIX=$(conda run python -c "import sys; print(sys.prefix)")
+        echo "$CONDA_PREFIX"
+    elif [ -d "$HOME/anaconda3" ]; then
+        echo "$HOME/anaconda3"
+    elif [ -d "$HOME/miniconda3" ]; then
+        echo "$HOME/miniconda3"
+    else
+        echo ""
+    fi
+}
+
 # Initialize conda in the current shell
 echo "Initializing conda..."
-$HOME/miniconda3/bin/conda init bash
+CONDA_PATH=$(detect_conda_path)
+if [ -z "$CONDA_PATH" ]; then
+    echo "Error: Conda installation not found"
+    exit 1
+fi
+
+$CONDA_PATH/bin/conda init bash
 source ~/.bashrc
 
 full_path=$(realpath $0)
@@ -26,12 +46,12 @@ dir_path=$(dirname $full_path)
 echo "Creating sglang-vla environment..."
 # Create and activate environment
 if ! conda env list | grep -qE "^\s*sglang-vla\s"; then
-    $HOME/miniconda3/bin/conda create -n sglang-vla python=3.10 -y
+    $CONDA_PATH/bin/conda create -n sglang-vla python=3.10 -y
 else
     echo "Conda environment 'sglang-vla' already exists. Skipping creation."
 fi
 
-source $HOME/miniconda3/etc/profile.d/conda.sh
+source $CONDA_PATH/etc/profile.d/conda.sh
 conda activate sglang-vla
 
 cd "$dir_path/../sglang-vla"

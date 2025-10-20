@@ -15,15 +15,35 @@ check_status() {
     fi
 }
 
+# Detect conda installation
+detect_conda_path() {
+    if command -v conda &> /dev/null; then
+        CONDA_PREFIX=$(conda run python -c "import sys; print(sys.prefix)")
+        echo "$CONDA_PREFIX"
+    elif [ -d "$HOME/anaconda3" ]; then
+        echo "$HOME/anaconda3"
+    elif [ -d "$HOME/miniconda3" ]; then
+        echo "$HOME/miniconda3"
+    else
+        echo ""
+    fi
+}
+
 # Reward environment setup
 echo "Setting up Reward environment..."
-source $HOME/miniconda3/etc/profile.d/conda.sh
+CONDA_PATH=$(detect_conda_path)
+if [ -z "$CONDA_PATH" ]; then
+    echo "Error: Conda installation not found"
+    exit 1
+fi
+
+source $CONDA_PATH/etc/profile.d/conda.sh
 
 full_path=$(realpath $0)
 dir_path=$(dirname $full_path)
 
 if ! conda env list | grep -qE "^\s*monkey-verifier\s"; then
-    $HOME/miniconda3/bin/conda create -n monkey-verifier python=3.10 -y
+    $CONDA_PATH/bin/conda create -n monkey-verifier python=3.10 -y
 else
     echo "Conda environment 'monkey-verifier' already exists. Skipping creation."
 fi
@@ -35,9 +55,9 @@ pip install --upgrade pip
 pip install -e .
 pip install ninja
 
-# LLaVA-RLHF dependencies
+# LLaVA-RLHF dependencies - Fixed versions to match LLaVA 1.0.0 requirements
 pip install torch==2.0.1+cu118 torchvision==0.15.2+cu118 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
-pip install deepspeed==0.9.3 peft==0.4.0 transformers==4.31.0 bitsandbytes==0.41.0
+pip install deepspeed==0.9.5 peft==0.3.0 transformers==4.30.2 bitsandbytes==0.40.1.post1
 pip install datasets==3.6.0 wandb==0.20.1 numpy==1.26.4 json_numpy openpyxl==3.1.5 tensorflow==2.19.0
 check_status "LLaVA-RLHF dependencies"
 
